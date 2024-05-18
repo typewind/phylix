@@ -7,6 +7,11 @@ import altair as alt
 def load_data(file_path):
     df = pd.read_csv(file_path)
     df['Date'] = pd.to_datetime(df['Date'])
+    attendance_df = df.dropna().groupby(['Team Name', 'Date'])['Player'].nunique().reset_index()
+    attendance_df.rename(columns={'Player': 'Attendance'}, inplace=True)
+    
+    # Merge attendance back into the original DataFrame
+    df = df.merge(attendance_df, on=['Team Name', 'Date'])
     return df
 
 df = load_data('./data/data_cleaned.csv')
@@ -35,7 +40,7 @@ date_max = df['Date'].max().date()
 selected_dates = st.sidebar.slider('Date', min_value=date_min, max_value=date_max, value=(date_min, date_max))
 
 # Define metrics
-metrics = ['Duration', 'Total Distance(m)', 'Total Player Load', 'Total Player Load Per Minute']
+metrics = ['Duration', 'Attendance']
 
 # Filter the data based on selections
 filtered_df = df[
@@ -44,8 +49,7 @@ filtered_df = df[
     (df['Weekday'].isin(selected_weekdays)) &
     (df['Date'] >= pd.to_datetime(selected_dates[0])) &
     (df['Date'] <= pd.to_datetime(selected_dates[1]))
-].groupby(["Team Name", "Year", "Week"])[metrics].mean().reset_index()
-
+]
 filtered_df['Date'] = pd.to_datetime(filtered_df['Year'].astype(str) + filtered_df['Week'].astype(str) + '1', format='%G%V%u') + pd.offsets.Week(weekday=0)
 
 print(filtered_df.head())
