@@ -69,4 +69,3 @@ df['Year'] = df['Date'].dt.year
 # %% create intensity metrics
 
 df['Total Player Load Per Minute'] = df["Total Player Load"] / df["Duration"]
-
