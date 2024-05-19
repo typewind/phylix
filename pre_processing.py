@@ -68,4 +68,25 @@ df['Year'] = df['Date'].dt.year
 
 # %% create intensity metrics
 
-df['Total Player Load Per Minute'] = df["Total Player Load"] / df["Duration"]
+df['Player Load Per Minute'] = df["Total Player Load"] / df["Duration"]
+df["Distance Per Minute"] = df["Total Distance(m)"] / df["Duration"]
+
+# %% Tool functions
+
+# Calculate ACWR
+def calc_acwr(df, metric):
+    # The ACWR is the ratio between how much workload has been done 
+    # in the last 7 days (acute workload) versus 
+    # the average weekly workload that has been performed 
+    # over the previous 28 days (chronic workload).
+    # Calculated by Exponentially Weighted Moving Average
+    # https://www.gpexe.com/2020/09/04/acutechronic-workload-ratio-part-2/
+
+    pass
+
+def is_load_abnormal(df, metric):
+    # If 
+    pass
+
+def is_imbalance(df):
+    pass
