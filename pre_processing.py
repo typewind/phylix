@@ -5,10 +5,19 @@ import re
 import os
 import datetime
 
-# %% Pre-defined season
+# %% Pre-defined variables
+IMBA_THRES = 0.1
+
 seasons = {
     "2021/22": ('2021-07-01', '2022-06-30'),
     "2022/23": ('2022-07-01', '2023-06-30')
+}
+
+metrics_classes = {
+    "Intensity": ['Load Per Minute', 'Distance Per Minute'],
+    "Agility": ['Acc 2m/s2 Total Effort','Acc 3m/s2 Total Effort', 'Dec 2m/s2 Total Effort', 'Dec 3m/s2 Total Effort'],
+    "IMA": ['IMA COD(left)', 'IMA COD(right)'],
+    "Volumn": ['Duration', 'Total Distance(m)', 'Total Player Load']
 }
 
 
@@ -62,6 +71,15 @@ def is_load_abnormal(df, metric):
     
     return df
 
+def get_risk_score(df, metrics, risk_score_name):
+        # Convert classification results to numerical values
+    classification_to_num = {'High': 1, 'Low': 1, 'Moderate': 0}
+    for metric in metrics:
+        df[f'{metric}_abnormal_num'] = df[f'is_{metric}_abnormal'].map(classification_to_num)
+    df[risk_score_name] = df[[f'{metric}_abnormal_num' for metric in metrics]].sum(axis=1)
+    df.drop(columns=[f'{metric}_abnormal_num' for metric in metrics], inplace=True)
+    return df
+
 
 def info_box(color_box=(255, 75, 75), iconname="fas fa-balance-scale-right", sline="Observations", i=123):
     wch_colour_box = color_box
@@ -75,10 +93,10 @@ def info_box(color_box=(255, 75, 75), iconname="fas fa-balance-scale-right", sli
 
     htmlstr = f"""<p style='background-color: rgb({wch_colour_box[0]}, 
                                                 {wch_colour_box[1]}, 
-                                                {wch_colour_box[2]}, 0.75); 
+                                                {wch_colour_box[2]}, 1); 
                             color: rgb({wch_colour_font[0]}, 
                                     {wch_colour_font[1]}, 
-                                    {wch_colour_font[2]}, 0.75); 
+                                    {wch_colour_font[2]}, 1); 
                             font-size: {fontsize}px; 
                             border-radius: 7px; 
                             padding-left: 12px; 
@@ -99,6 +117,7 @@ def get_training_intensity(df):
 
 def get_imbalance(df):
     df["IMA COD Imbalance"] = (df['IMA COD(left)'] - df['IMA COD(right)'])/df['IMA COD(right)']
+    df["Is IMA Imbalance"] = df["IMA COD Imbalance"].abs() > IMBA_THRES
     return df
 
 # %% Create a complete date range for each combination
@@ -113,7 +132,13 @@ metrics = ['Duration', 'Total Distance(m)', 'Total Player Load', 'Acc 2m/s2 Tota
            'High Intensity Distance(m)', 'Sprint Distance(m)', 'Maximum Velocity(m/s)',
            'IMA COD(left)', 'IMA COD(right)']
 
+
+# metrics classification
 intensity_metrics = ['Load Per Minute', 'Distance Per Minute']
+agility_metrics = ['Acc 2m/s2 Total Effort','Acc 3m/s2 Total Effort', 'Dec 2m/s2 Total Effort', 'Dec 3m/s2 Total Effort']
+ima_metrics = ['IMA COD(left)', 'IMA COD(right)'] # balance
+volumn_metrics = ['Duration', 'Total Distance(m)', 'Total Player Load']
+
 
 for _, row in unique_combinations.iterrows():
     player, position, team_name = row
@@ -160,6 +185,7 @@ df_all = get_imbalance(df_all)
 df_week_player = get_imbalance(df_week_player)
 
 
+
 # %% calculate EWMA ACWR
 for metric in metrics+intensity_metrics:
     df_all = calc_ewma_acwr(df_all, metric)
@@ -170,8 +196,21 @@ for metric in metrics + intensity_metrics:
     df_all = is_load_abnormal(df_all, metric)
     df_week_player = is_load_abnormal(df_week_player, metric)
 
-
-
-
+# %% calculate risk score
+for metric_class, metrics in metrics_classes.items():
+    df_all = get_risk_score(df_all, metrics, f"{metric_class} Risk Score")
+    df_week_player = get_risk_score(df_week_player, metrics, f"{metric_class} Risk Score")
 
 # %%
+df_week_player = df_week_player.reset_index()
+df_week_team = df_week_team.reset_index()
+
+# %% add date to week player and team for filter
+def year_week_to_date(year, week):
+    first_day_of_year = datetime.datetime(year, 1, 1)
+    first_day_of_week = first_day_of_year - datetime.timedelta(days=first_day_of_year.weekday())
+    start_of_week = first_day_of_week + datetime.timedelta(weeks=week - 1)
+    return start_of_week
+
+df_week_player['Date'] = df_week_player.apply(lambda row: year_week_to_date(row['Year'], row['Week']), axis=1)
+df_week_team['Date'] = df_week_team.apply(lambda row: year_week_to_date(row['Year'], row['Week']), axis=1)
