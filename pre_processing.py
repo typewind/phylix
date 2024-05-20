@@ -81,34 +81,6 @@ def get_risk_score(df, metrics, risk_score_name):
     return df
 
 
-def info_box(color_box=(255, 75, 75), iconname="fas fa-balance-scale-right", sline="Observations", i=123):
-    wch_colour_box = color_box
-    wch_colour_font = (0, 0, 0)
-    fontsize = 28
-    valign = "left"
-    iconname = iconname
-    sline = sline
-    lnk = '<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">'
-    i = i
-
-    htmlstr = f"""<p style='background-color: rgb({wch_colour_box[0]}, 
-                                                {wch_colour_box[1]}, 
-                                                {wch_colour_box[2]}, 1); 
-                            color: rgb({wch_colour_font[0]}, 
-                                    {wch_colour_font[1]}, 
-                                    {wch_colour_font[2]}, 1); 
-                            font-size: {fontsize}px; 
-                            border-radius: 7px; 
-                            padding-left: 12px; 
-                            padding-top: 18px; 
-                            padding-bottom: 18px; 
-                            line-height:25px;'>
-                            <i class='{iconname} fa-xs'></i> {i}
-                            </style><BR><span style='font-size: 18px; 
-                            margin-top: 0;'>{sline}</style></span></p>"""
-
-    return lnk + htmlstr
-
 
 def get_training_intensity(df):
     df['Load Per Minute'] = df["Total Player Load"] / df["Duration"]
