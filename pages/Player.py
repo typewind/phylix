@@ -1,8 +1,11 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
-from pre_processing import df_all, df_week_player, df_week_team, metrics_classes
+from pre_processing import metrics_classes
 from tools import info_box
+
+df_all = pd.read_csv("./data/df_all.csv", parse_dates=["Date"], date_format='%Y-%m-%d (W%V)')
+df_week_player = pd.read_csv("./data/df_week_player.csv", parse_dates=["Date"], date_format='%Y-%m-%d (W%V)')
 
 
 # ========================
@@ -65,12 +68,6 @@ filtered_df_week_team = df_week_player[
     (df_all['Date'] <= pd.to_datetime(selected_dates[1]))
 ]
 
-# filtered_df_team_player = df_week_team[
-#     (df_all['Team Name'].isin(selected_teams)) &
-#     (df_all['Season'].isin(selected_seasons)) &
-#     (df_all['Date'] >= pd.to_datetime(selected_dates[0])) &
-#     (df_all['Date'] <= pd.to_datetime(selected_dates[1]))
-# ]
 
 
 # ========================
@@ -81,39 +78,47 @@ with total_players:
     st.markdown(info_box(sline="Total Players Selected",
                         iconname = "fas fa-users",
                         color_box = (39, 158, 255),
-                        i=len(filtered_df_week_team["Player"].unique())
+                        i=len(filtered_df_week_player["Player"].unique())
                         ),
             unsafe_allow_html=True)
 with vol_risk:
     st.markdown(info_box(sline="Volumn Risk",
                          iconname = "fas fa-exclamation-circle",
                          color_box=(0, 231, 255),
-                         i=len(filtered_df_week_team[filtered_df_week_team["Volumn Risk Score"]!=0]["Player"].unique())),
+                         i=len(filtered_df_week_player[filtered_df_week_player["Volumn Risk Score"]!=0]["Player"].unique())),
                 unsafe_allow_html=True)
 with intensity_risk:
     st.markdown(info_box(sline="Intensity Risk",
                          iconname = "fas fa-exclamation-circle",
                          color_box=(0, 231, 255),
-                         i=len(filtered_df_week_team[filtered_df_week_team["Intensity Risk Score"]!=0]["Player"].unique())),
+                         i=len(filtered_df_week_player[filtered_df_week_player["Intensity Risk Score"]!=0]["Player"].unique())),
                 unsafe_allow_html=True)
 with agi_risk:
     st.markdown(info_box(sline="Agility Risk",
                          iconname = "fas fa-exclamation-circle",
                          color_box=(0, 231, 255),
-                         i=len(filtered_df_week_team[filtered_df_week_team["Agility Risk Score"]!=0]["Player"].unique())),
+                         i=len(filtered_df_week_player[filtered_df_week_player["Agility Risk Score"]!=0]["Player"].unique())),
                 unsafe_allow_html=True)
 with ima_risk:
     st.markdown(info_box(sline="IMA Risk",
                          iconname = "fas fa-exclamation-circle",
                          color_box=(0, 231, 255),
-                         i=len(filtered_df_week_team[filtered_df_week_team["IMA Risk Score"]!=0]["Player"].unique())),
+                         i=len(filtered_df_week_player[filtered_df_week_player["IMA Risk Score"]!=0]["Player"].unique())),
                 unsafe_allow_html=True)
 with imba:
     st.markdown(info_box(sline="Imbalance",
                          iconname = "fas fa-balance-scale-right",
                          color_box=(0, 255, 246),
-                         i=len(filtered_df_week_team[filtered_df_week_team["Is IMA Imbalance"]]["Player"].unique())),
+                         i=len(filtered_df_week_player[filtered_df_week_player["Is IMA Imbalance"]]["Player"].unique())),
                 unsafe_allow_html=True)
                 
 st.markdown("---")
 
+with st.container():
+    player, team = st.columns(2)
+    with team:
+        volumn_chart, intensity_chart = st.columns(2)
+        agility_chart, ima_chart = st.columns(2)
+
+    with player: 
+        st.subheader(f"**{selected_player} Report**")

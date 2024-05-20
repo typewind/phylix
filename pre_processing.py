@@ -53,7 +53,7 @@ def calc_ewma_acwr(df, metric, acute_days=7, chronic_days=28):
     # Calculate EWMA ACWR for each player
     temp_df[f'{metric} Acute EWMA'] = temp_df.groupby('Player')[metric].transform(lambda x: ewma(x, acute_days))
     temp_df[f'{metric} Chronic EWMA'] = temp_df.groupby('Player')[metric].transform(lambda x: ewma(x, chronic_days))
-    df[f'{metric} EWMA ACWR'] = temp_df[f'{metric} Acute EWMA']/temp_df[f'{metric} Chronic EWMA']
+    df[f'{metric} EWMA ACWR'] = (temp_df[f'{metric} Acute EWMA']/temp_df[f'{metric} Chronic EWMA']).round(2)
 
     return df
 
@@ -68,7 +68,6 @@ def is_load_abnormal(df, metric):
     
     # Apply the classification
     df[f'is_{metric}_abnormal'] = np.select(conditions, choices, default='Moderate')
-    
     return df
 
 def get_risk_score(df, metrics, risk_score_name):
@@ -84,11 +83,11 @@ def get_risk_score(df, metrics, risk_score_name):
 
 def get_training_intensity(df):
     df['Load Per Minute'] = df["Total Player Load"] / df["Duration"]
-    df["Distance Per Minute"] = df["Total Distance(m)"] / df["Duration"]
+    df["Distance Per Minute"] = (df["Total Distance(m)"] / df["Duration"]).round(2)
     return df
 
 def get_imbalance(df):
-    df["IMA COD Imbalance"] = (df['IMA COD(left)'] - df['IMA COD(right)'])/df['IMA COD(right)']
+    df["IMA COD Imbalance"] = ((df['IMA COD(left)'] - df['IMA COD(right)'])/df['IMA COD(right)']).round(2)
     df["Is IMA Imbalance"] = df["IMA COD Imbalance"].abs() > IMBA_THRES
     return df
 
@@ -142,8 +141,9 @@ df_all['Week'] = df_all['Date'].dt.isocalendar().week
 df_all['Year'] = df_all['Date'].dt.year
 df_all['Year-Week'] = df_all['Year'].astype(str) + '-W' + df_all['Week'].astype(str).str.zfill(2)
 
-df_week_player = df_all.groupby(["Player", "Position", "Team Name", "Season", "Year", "Week", "Year-Week"])[metrics].mean()
-df_week_team = df_all.groupby(["Team Name", "Season", "Year", "Week", "Year-Week"])[metrics].mean()
+df_week_player = df_all.groupby(["Player", "Position", "Team Name", "Year", "Week", "Year-Week"])[metrics].mean()
+df_week_team = df_all.groupby(["Team Name", "Year", "Week", "Year-Week"])[metrics].mean()
+
 
 # %% create intensity metrics
 
@@ -181,8 +181,18 @@ df_week_team = df_week_team.reset_index()
 def year_week_to_date(year, week):
     first_day_of_year = datetime.datetime(year, 1, 1)
     first_day_of_week = first_day_of_year - datetime.timedelta(days=first_day_of_year.weekday())
-    start_of_week = first_day_of_week + datetime.timedelta(weeks=week - 1)
+    start_of_week = first_day_of_week + datetime.timedelta(weeks=week)
     return start_of_week
 
 df_week_player['Date'] = df_week_player.apply(lambda row: year_week_to_date(row['Year'], row['Week']), axis=1)
 df_week_team['Date'] = df_week_team.apply(lambda row: year_week_to_date(row['Year'], row['Week']), axis=1)
+
+df_week_player['Season'] = df_week_player['Date'].apply(get_season)
+df_week_team['Season'] = df_week_team['Date'].apply(get_season)
+
+
+# %% export to csv
+df_all.to_csv("./data/df_all.csv", index=False, encoding="utf-8-sig")
+df_week_player.to_csv("./data/df_week_player.csv", index=False, encoding="utf-8-sig")
+df_week_team.to_csv("./data/df_week_team.csv", index=False, encoding="utf-8-sig")
+# %%
