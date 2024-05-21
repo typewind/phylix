@@ -36,7 +36,7 @@ df_all.columns = ['Date', 'Player', 'Position', 'Team Name', 'Duration',
 # %% Tool functions
 
 # Calculate ACWR
-def calc_ewma_acwr(df, metric, acute_days=7, chronic_days=28):
+def calc_ewma_acwr(df, metric, acute_days=7, chronic_days=28, min_periods=1):
     # The ACWR is the ratio between how much workload has been done 
     # in the last 7 days (acute workload) versus 
     # the average weekly workload that has been performed 

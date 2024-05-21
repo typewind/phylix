@@ -1,11 +1,11 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
-from pre_processing import metrics_classes
-from tools import info_box
+from tools import info_box, draw_acwr, metrics_classes, get_not_passed_metrics, submit_comment
 
-df_all = pd.read_csv("./data/df_all.csv", parse_dates=["Date"], date_format='%Y-%m-%d (W%V)')
-df_week_player = pd.read_csv("./data/df_week_player.csv", parse_dates=["Date"], date_format='%Y-%m-%d (W%V)')
+df_all = pd.read_csv("./data/df_all.csv", parse_dates=["Date"], date_format='%Y-%m-%d')
+df_week_player = pd.read_csv("./data/df_week_player.csv", parse_dates=["Date"], date_format='%Y-%m-%d')
+comment_table = pd.read_csv("./data/player_weekly_review_comment.csv")
 
 
 # ========================
@@ -14,7 +14,7 @@ df_week_player = pd.read_csv("./data/df_week_player.csv", parse_dates=["Date"], 
 
 st.set_page_config(layout="wide")
 
-st.markdown("# Player Performance Monitor")
+st.markdown("# Player Weekly Performance Monitor")
 st.sidebar.markdown("# Player")
 
 # ========================
@@ -114,11 +114,69 @@ with imba:
                 
 st.markdown("---")
 
+def metrics_dropdown(metrics):
+    pass
+
 with st.container():
     player, team = st.columns(2)
     with team:
         volumn_chart, intensity_chart = st.columns(2)
         agility_chart, ima_chart = st.columns(2)
+        with volumn_chart:
+            selected_metric_volumn = st.selectbox("Select Volumn Metric", metrics_classes["Volumn"])
+            st.altair_chart(draw_acwr(filtered_df_week_player, selected_metric_volumn),use_container_width=True, theme="streamlit")
+        with intensity_chart:
+            selected_metric_intensity = st.selectbox("Select Intensity Metric", metrics_classes["Intensity"])
+            st.altair_chart(draw_acwr(filtered_df_week_player, selected_metric_intensity), use_container_width=True, theme="streamlit")
+        with agility_chart:
+            selected_metric_agility = st.selectbox("Select Agility Metric", metrics_classes["Agility"])
+            st.altair_chart(draw_acwr(filtered_df_week_player, selected_metric_agility), use_container_width=True, theme="streamlit")
+        with ima_chart:
+            selected_metric_ima = st.selectbox("Select IMA Metric", metrics_classes['IMA'])
+            st.altair_chart(draw_acwr(filtered_df_week_player, selected_metric_ima),use_container_width=True, theme="streamlit")
+
 
     with player: 
         st.subheader(f"**{selected_player} Report**")
+        not_pass_metrics = get_not_passed_metrics(filtered_df_week_player, metrics_classes)
+
+        # Description
+        st.markdown(f"""During {selected_dates[0]} and {selected_dates[1]},
+                   {selected_player}, the {filtered_df_week_player["Position"].values[-1]} of 
+                    {filtered_df_week_player["Team Name"].values[-1]}:""")
+        # check if any metrics abnormal
+        for key, value in metrics_classes.items():
+            if key not in not_pass_metrics :
+                st.markdown(f"{key} - performance are normal.")
+            else:
+                st.markdown(f"""- <span style="color:#FF4B4B;">  {", ".join(str(x) for x in not_pass_metrics[key])} </span> not passed.""", unsafe_allow_html=True)
+        # check if imbalance
+        if any(filtered_df_week_player["Is IMA Imbalance"]):
+            st.markdown(f"""- The result of <span style="color:#FF4B4B;"> IMA COD </span> is not balanced. """, unsafe_allow_html=True)
+        else:
+            st.markdown("- The IMA CODs are balanced.")
+
+        # Comment area
+        st.markdown("**Comment:**")
+        comment_list = comment_table[(comment_table["Player ID"] == selected_player)]["Comment"].values
+        if len(comment_list)==0:
+            st.markdown("Ask performance team for further advice.")
+        else:
+            for x in comment_list:
+                st.markdown(f"- {x}")
+    
+        st.markdown('''
+                    <style>
+                    [data-testid="stMarkdownContainer"] ul{
+                        padding-left:40px;
+                    }
+                    </style>
+                    ''', unsafe_allow_html=True)
+
+        # add comment
+        comment = st.text_input('Add Comment:', '')
+        if st.button('Submit'):
+            submit_comment(selected_player, comment, comment_table)
+            # reset comments
+            comment = ""
+            st.rerun()
