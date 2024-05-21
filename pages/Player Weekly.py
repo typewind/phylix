@@ -43,6 +43,16 @@ date_min = df_all['Date'].min().date()
 date_max = df_all['Date'].max().date()
 selected_dates = st.sidebar.slider('Date', min_value=date_min, max_value=date_max, value=(date_min, date_max))
 
+# Filter for the traffic light
+filtered_team_traffic_df = df_all[(df_all['Team Name'].isin(selected_teams)) &     
+                                  (df_all['Date'] >= pd.to_datetime(selected_dates[0])) &
+                                  (df_all['Date'] <= pd.to_datetime(selected_dates[1]))]
+
+filtered_team_traffic_df_week = df_week_player[(df_week_player['Team Name'].isin(selected_teams)) &     
+                                  (df_week_player['Date'] >= pd.to_datetime(selected_dates[0])) &
+                                  (df_week_player['Date'] <= pd.to_datetime(selected_dates[1]))]
+
+
 
 # Filter the data based on selections
 filtered_df_all_player = df_all[
@@ -54,18 +64,18 @@ filtered_df_all_player = df_all[
 ]
 
 filtered_df_week_player = df_week_player[
-    (df_all['Team Name'].isin(selected_teams)) &
-    (df_all['Season'].isin(selected_seasons)) &
-    (df_all['Player'] == selected_player) &
-    (df_all['Date'] >= pd.to_datetime(selected_dates[0])) &
-    (df_all['Date'] <= pd.to_datetime(selected_dates[1]))
+    (df_week_player['Team Name'].isin(selected_teams)) &
+    (df_week_player['Season'].isin(selected_seasons)) &
+    (df_week_player['Player'] == selected_player) &
+    (df_week_player['Date'] >= pd.to_datetime(selected_dates[0])) &
+    (df_week_player['Date'] <= pd.to_datetime(selected_dates[1]))
 ]
 
 filtered_df_week_team = df_week_player[
-    (df_all['Team Name'].isin(selected_teams)) &
-    (df_all['Season'].isin(selected_seasons)) &
-    (df_all['Date'] >= pd.to_datetime(selected_dates[0])) &
-    (df_all['Date'] <= pd.to_datetime(selected_dates[1]))
+    (df_week_player['Team Name'].isin(selected_teams)) &
+    (df_week_player['Season'].isin(selected_seasons)) &
+    (df_week_player['Date'] >= pd.to_datetime(selected_dates[0])) &
+    (df_week_player['Date'] <= pd.to_datetime(selected_dates[1]))
 ]
 
 
@@ -78,38 +88,38 @@ with total_players:
     st.markdown(info_box(sline="Total Players Selected",
                         iconname = "fas fa-users",
                         color_box = (39, 158, 255),
-                        i=len(filtered_df_week_player["Player"].unique())
+                        i=len(filtered_team_traffic_df_week['Player'].unique())
                         ),
             unsafe_allow_html=True)
 with vol_risk:
     st.markdown(info_box(sline="Volumn Risk",
                          iconname = "fas fa-exclamation-circle",
                          color_box=(0, 231, 255),
-                         i=len(filtered_df_week_player[filtered_df_week_player["Volumn Risk Score"]!=0]["Player"].unique())),
+                         i=len(filtered_team_traffic_df_week[filtered_team_traffic_df_week["Volumn Risk Score"]!=0]["Player"].dropna().unique())),
                 unsafe_allow_html=True)
 with intensity_risk:
     st.markdown(info_box(sline="Intensity Risk",
                          iconname = "fas fa-exclamation-circle",
                          color_box=(0, 231, 255),
-                         i=len(filtered_df_week_player[filtered_df_week_player["Intensity Risk Score"]!=0]["Player"].unique())),
+                         i=len(filtered_team_traffic_df_week[filtered_team_traffic_df_week["Intensity Risk Score"]!=0]["Player"].dropna().unique())),
                 unsafe_allow_html=True)
 with agi_risk:
     st.markdown(info_box(sline="Agility Risk",
                          iconname = "fas fa-exclamation-circle",
                          color_box=(0, 231, 255),
-                         i=len(filtered_df_week_player[filtered_df_week_player["Agility Risk Score"]!=0]["Player"].unique())),
+                         i=len(filtered_team_traffic_df_week[filtered_team_traffic_df_week["Agility Risk Score"]!=0]["Player"].dropna().unique())),
                 unsafe_allow_html=True)
 with ima_risk:
     st.markdown(info_box(sline="IMA Risk",
                          iconname = "fas fa-exclamation-circle",
                          color_box=(0, 231, 255),
-                         i=len(filtered_df_week_player[filtered_df_week_player["IMA Risk Score"]!=0]["Player"].unique())),
+                         i=len(filtered_team_traffic_df_week[filtered_team_traffic_df_week["IMA Risk Score"]!=0]["Player"].dropna().unique())),
                 unsafe_allow_html=True)
 with imba:
     st.markdown(info_box(sline="Imbalance",
                          iconname = "fas fa-balance-scale-right",
                          color_box=(0, 255, 246),
-                         i=len(filtered_df_week_player[filtered_df_week_player["Is IMA Imbalance"]]["Player"].unique())),
+                         i=len(filtered_team_traffic_df_week[filtered_team_traffic_df_week["Is IMA Imbalance"]]["Player"].dropna().unique())),
                 unsafe_allow_html=True)
                 
 st.markdown("---")
@@ -139,20 +149,19 @@ with st.container():
     with player: 
         st.subheader(f"**{selected_player} Report**")
         not_pass_metrics = get_not_passed_metrics(filtered_df_week_player, metrics_classes)
-
         # Description
         st.markdown(f"""During {selected_dates[0]} and {selected_dates[1]},
                    {selected_player}, the {filtered_df_week_player["Position"].values[-1]} of 
-                    {filtered_df_week_player["Team Name"].values[-1]}:""")
+                    {", ".join(str(x) for x in filtered_df_week_player["Team Name"].unique())}:""")
         # check if any metrics abnormal
         for key, value in metrics_classes.items():
             if key not in not_pass_metrics :
                 st.markdown(f"{key} - performance are normal.")
             else:
-                st.markdown(f"""- <span style="color:#FF4B4B;">  {", ".join(str(x) for x in not_pass_metrics[key])} </span> not passed.""", unsafe_allow_html=True)
+                st.markdown(f"""- **{key}**: Warning on <span style="color:#FF4B4B;">  {", ".join(str(x) for x in not_pass_metrics[key])} </span>.""", unsafe_allow_html=True)
         # check if imbalance
         if any(filtered_df_week_player["Is IMA Imbalance"]):
-            st.markdown(f"""- The result of <span style="color:#FF4B4B;"> IMA COD </span> is not balanced. """, unsafe_allow_html=True)
+            st.markdown(f"""- The result of <span style="color:#FF4B4B;"> IMA COD </span> shows risks. """, unsafe_allow_html=True)
         else:
             st.markdown("- The IMA CODs are balanced.")
 

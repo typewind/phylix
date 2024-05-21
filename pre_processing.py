@@ -46,7 +46,7 @@ def calc_ewma_acwr(df, metric, acute_days=7, chronic_days=28, min_periods=1):
     
     # Function to calculate EWMA
     def ewma(series, span):
-        return series.ewm(span=span, adjust=False).mean()
+        return series.ewm(span=span, adjust=True).mean()
     
     temp_df = df.copy()
 
