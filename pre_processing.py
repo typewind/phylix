@@ -4,6 +4,7 @@ import numpy as np
 import re
 import os
 import datetime
+from tools import metrics_classes
 
 # %% Pre-defined variables
 IMBA_THRES = 0.1
@@ -13,16 +14,10 @@ seasons = {
     "2022/23": ('2022-07-01', '2023-06-30')
 }
 
-metrics_classes = {
-    "Intensity": ['Load Per Minute', 'Distance Per Minute'],
-    "Agility": ['Acc 2m/s2 Total Effort','Acc 3m/s2 Total Effort', 'Dec 2m/s2 Total Effort', 'Dec 3m/s2 Total Effort'],
-    "IMA": ['IMA COD(left)', 'IMA COD(right)'],
-    "Volumn": ['Duration', 'Total Distance(m)', 'Total Player Load']
-}
-
 
 # %% Read data and rename columns
 df_all = pd.read_csv("./data/anonymous.csv")
+
 
 # Rename columns for reporting purpose
 df_all.columns = ['Date', 'Player', 'Position', 'Team Name', 'Duration',
@@ -36,13 +31,13 @@ df_all.columns = ['Date', 'Player', 'Position', 'Team Name', 'Duration',
 # %% Tool functions
 
 # Calculate ACWR
-def calc_ewma_acwr(df, metric, acute_days=7, chronic_days=28, min_periods=1):
+def calc_ewma_acwr(df, metric, acute_days=7, chronic_days=21, min_periods=28):
     # The ACWR is the ratio between how much workload has been done 
     # in the last 7 days (acute workload) versus 
     # the average weekly workload that has been performed 
-    # over the previous 28 days (chronic workload).
+    # over the previous 21 days (chronic workload).
     # Calculated by Exponentially Weighted Moving Average
-    # https://www.gpexe.com/2020/09/04/acutechronic-workload-ratio-part-2/
+    # https://support.catapultsports.com/hc/en-us/articles/360000538795-How-to-Set-Up-an-Acute-Chronic-Workload-Ratio-Chart
     
     # Function to calculate EWMA
     def ewma(series, span):
@@ -60,9 +55,9 @@ def calc_ewma_acwr(df, metric, acute_days=7, chronic_days=28, min_periods=1):
 
 def is_load_abnormal(df, metric):
     conditions = [
-        (df[f'{metric} EWMA ACWR'] > 1.3),
+        (df[f'{metric} EWMA ACWR'] > 1.5),
         (df[f'{metric} EWMA ACWR'] < 0.8),
-        (df[f'{metric} EWMA ACWR'] >= 0.8) & (df[metric] <= 1.3)
+        (df[f'{metric} EWMA ACWR'] >= 0.8) & (df[metric] <= 1.5)
     ]
     choices = ['High', 'Low', 'Moderate']
     
@@ -80,15 +75,27 @@ def get_risk_score(df, metrics, risk_score_name):
     return df
 
 
-
 def get_training_intensity(df):
-    df['Load Per Minute'] = df["Total Player Load"] / df["Duration"]
+    df['Load Per Minute'] = (df["Total Player Load"] / df["Duration"]).round(2)
     df["Distance Per Minute"] = (df["Total Distance(m)"] / df["Duration"]).round(2)
+    df["Acc-Dec-COD Per Minute"] = ((df['IMA COD(left)'] + df['IMA COD(right)'] + 
+                                    df['Acc 2m/s2 Total Effort'] + df['Dec 2m/s2 Total Effort']
+                                    )/ df["Duration"]).round(2)
     return df
 
 def get_imbalance(df):
     df["IMA COD Imbalance"] = ((df['IMA COD(left)'] - df['IMA COD(right)'])/df['IMA COD(right)']).round(2)
     df["Is IMA Imbalance"] = df["IMA COD Imbalance"].abs() > IMBA_THRES
+
+    conditions = [
+        (df["IMA COD Imbalance"] > 1.2),
+        (df["IMA COD Imbalance"] < 0.8),
+        (df["IMA COD Imbalance"] >= 0.8) & (df["IMA COD Imbalance"] <= 1.2)
+    ]
+    choices = ['Left', 'Right', 'Balance']
+    df["IMA COD Deviation"] = np.select(conditions, choices, default='Balance')
+    df["IMA COD(Right) %"] = (df['IMA COD(right)'] / (df['IMA COD(left)'] + df['IMA COD(right)'])).apply(lambda x: f"{x:.2%}")
+    df["IMA COD(Left) %"] = (df['IMA COD(left)'] / (df['IMA COD(left)'] + df['IMA COD(right)'])).apply(lambda x: f"{x:.2%}")
     return df
 
 # %% Create a complete date range for each combination
@@ -105,11 +112,7 @@ metrics = ['Duration', 'Total Distance(m)', 'Total Player Load', 'Acc 2m/s2 Tota
 
 
 # metrics classification
-intensity_metrics = ['Load Per Minute', 'Distance Per Minute']
-agility_metrics = ['Acc 2m/s2 Total Effort','Acc 3m/s2 Total Effort', 'Dec 2m/s2 Total Effort', 'Dec 3m/s2 Total Effort']
-ima_metrics = ['IMA COD(left)', 'IMA COD(right)'] # balance
-volumn_metrics = ['Duration', 'Total Distance(m)', 'Total Player Load']
-
+intensity_metrics = ['Load Per Minute', 'Distance Per Minute', 'Acc-Dec-COD Per Minute']
 
 for _, row in unique_combinations.iterrows():
     player, position, team_name = row
@@ -161,7 +164,7 @@ df_week_player = get_imbalance(df_week_player)
 # %% calculate EWMA ACWR
 for metric in metrics+intensity_metrics:
     df_all = calc_ewma_acwr(df_all, metric)
-    df_week_player = calc_ewma_acwr(df_week_player, metric, acute_days=1, chronic_days=4)
+    df_week_player = calc_ewma_acwr(df_week_player, metric, acute_days=1, chronic_days=3, min_periods=3)
 
 # %% find abnormal per player
 for metric in metrics + intensity_metrics:
