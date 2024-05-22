@@ -17,6 +17,9 @@ seasons = {
 
 # %% Read data and rename columns
 df_all = pd.read_csv("./data/anonymous.csv")
+df_all = df_all[df_all["duration"]>=15]
+training_count = df_all["player"].value_counts()
+df_all = df_all[df_all['player'].isin(training_count[training_count>=8].index)]
 
 
 # Rename columns for reporting purpose
@@ -27,11 +30,16 @@ df_all.columns = ['Date', 'Player', 'Position', 'Team Name', 'Duration',
        'Sprint Distance(m)', 'Maximum Velocity(m/s)', 'IMA COD(left)',
        'IMA COD(right)']
 
+# %% remove training record < 15 min
+# and then remove players whose training count < 7
+
+df_all = df_all[df_all["Duration"]>=15]
+training_count = df_all["Player"].value_counts()
 
 # %% Tool functions
 
 # Calculate ACWR
-def calc_ewma_acwr(df, metric, acute_days=7, chronic_days=21, min_periods=28):
+def calc_ewma_acwr(df, metric, acute_days=7, chronic_days=21, min_periods=21):
     # The ACWR is the ratio between how much workload has been done 
     # in the last 7 days (acute workload) versus 
     # the average weekly workload that has been performed 
@@ -66,7 +74,7 @@ def is_load_abnormal(df, metric):
     return df
 
 def get_risk_score(df, metrics, risk_score_name):
-        # Convert classification results to numerical values
+    # Convert classification results to numerical values
     classification_to_num = {'High': 1, 'Low': 1, 'Moderate': 0}
     for metric in metrics:
         df[f'{metric}_abnormal_num'] = df[f'is_{metric}_abnormal'].map(classification_to_num)
