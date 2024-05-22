@@ -173,3 +173,50 @@ def draw_ima_cod(player1):
     )
 
     return combined_chart
+
+
+def team_individual_graph(filtered_df,filtered_df_week, metric):
+
+    temp_df = filtered_df[["Player",f"{metric}"]].dropna()
+
+    max_series = filtered_df_week.groupby(["Player"])[f"{metric}"].max()
+    max_series.name = f"Max {metric}"
+    max_series = max_series.reset_index()
+    max_series.rename(columns={'index': 'Player'}, inplace=True)
+
+    merged_df = temp_df.merge(max_series, on='Player', how='left')
+    print(merged_df)
+
+    merged_df = merged_df.sort_values(by=metric, ascending=False)
+
+    # Calculate the average Duration
+    average_duration = merged_df[metric].mean()
+
+    # Create the bar chart for Duration
+    bars = alt.Chart(merged_df).mark_bar(color="#0F52BA").encode(
+        y=alt.Y('Player:N', sort=merged_df['Player'].tolist(), title='Player'),
+        x=alt.X(f'{metric}:Q', title=metric),
+        tooltip=['Player', metric, f'{metric}']
+    ).properties(
+    height=800
+)
+
+    # Create the tick chart for Max Duration
+    ticks = alt.Chart(merged_df).mark_tick(color='#FF4B4B', thickness=2, size=20).encode(
+        y=alt.Y('Player:N', sort=merged_df['Player'].tolist(), title='Player'),
+        x=alt.X(f'Max {metric}:Q')
+    )
+
+    # Create the dashed line for average Duration
+    average_line = alt.Chart(pd.DataFrame({f'Avg {metric}': [average_duration]})).mark_rule(
+        strokeDash=[5, 5], color='#A0DEFF'
+    ).encode(
+        x=f'Avg {metric}:Q'
+    )
+
+    # Combine the charts
+    combined_chart = (bars + ticks + average_line).properties(
+        title=f'{metric} vs Weekly Max {metric}'
+    )
+
+    return combined_chart
