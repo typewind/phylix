@@ -128,7 +128,7 @@ st.markdown("---")
 with st.container():
     player, info = st.columns(2)
     with player: 
-        st.subheader(f"**{selected_player} Report**")
+        st.markdown(f"## {selected_player} Report")
         not_pass_metrics = get_not_passed_metrics(filtered_df_week_player, metrics_classes)
         # Description
         st.markdown(f"""During {selected_dates[0]} and {selected_dates[1]},
@@ -142,6 +142,7 @@ for key, value in not_pass_metrics.items():
     with st.container():
         summary, visual = st.columns(2)
         with summary:
+            st.markdown(f"### {key}")
             if key == "IMA":
                 if any(filtered_df_week_player["Is IMA Imbalance"]):
                     st.markdown(f"""- The balance of <span style="color:#FF4B4B;"> IMA COD </span> shows risks. """, unsafe_allow_html=True)
@@ -151,7 +152,9 @@ for key, value in not_pass_metrics.items():
                 if len(value)==0 :
                     st.markdown(f"- **{key}** - performance are normal.")
                 else:
-                    st.markdown(f"""- **{key}**: Warning on <span style="color:#FF4B4B;">  {", ".join(str(x) for x in not_pass_metrics[key])} </span>.""", unsafe_allow_html=True)
+                    # Generate the bullet list with colored items
+                    bullet_list = "\n".join([f'<li><span style="color:#FF4B4B;"> - {str(x)} </span></li>' for x in not_pass_metrics[key]])
+                    st.markdown(f"""**Warning** on:\n<ul>{bullet_list}</ul>""", unsafe_allow_html=True)
         
         with visual:
             if key == "IMA":
@@ -164,7 +167,8 @@ for key, value in not_pass_metrics.items():
 # Comment area
 with st.container():
     st.markdown("**Comment:**")
-    comment_list = comment_table[(comment_table["Player ID"] == selected_player)]["Comment"].values
+    player_comment = comment_table[(comment_table["Player"] == selected_player)]
+    comment_list = (player_comment["User"] + ": " + player_comment["Comment"]).values
     if len(comment_list)==0:
         st.markdown("Ask performance team for further advice.")
     else:
@@ -180,9 +184,11 @@ with st.container():
                 ''', unsafe_allow_html=True)
 
     # add comment
-    comment = st.text_input('Add Comment:', '')
+    user = st.text_input('Your Name', '')
+    comment = st.text_area('Comment:', '')
     if st.button('Submit'):
-        submit_comment(selected_player, comment, comment_table)
+        submit_comment(selected_player, comment, user, comment_table)
         # reset comments
         comment = ""
+        user = ""
         st.rerun()

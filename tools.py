@@ -100,10 +100,10 @@ def get_not_passed_metrics(df, metrics_classes):
 
 
 
-def submit_comment(player_id,  text, comment_table):
+def submit_comment(player_id,  text, user, comment_table):
     ts = time.time()
     now = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-    new_row = pd.DataFrame({'Player ID': [player_id], 'Timestamp': [now], 'Comment': [text]})
+    new_row = pd.DataFrame({'Player': [player_id], 'Timestamp': [now],'User':user, 'Comment': [text]})
     comment_table = pd.concat([comment_table, new_row], ignore_index=True)
     comment_table.to_csv("./data/player_weekly_review_comment.csv", encoding='utf-8', index=False)
 

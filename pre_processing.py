@@ -160,7 +160,6 @@ df_all = get_imbalance(df_all)
 df_week_player = get_imbalance(df_week_player)
 
 
-
 # %% calculate EWMA ACWR
 for metric in metrics+intensity_metrics:
     df_all = calc_ewma_acwr(df_all, metric)
