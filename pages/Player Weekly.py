@@ -46,11 +46,11 @@ selected_dates = st.sidebar.slider('Date', min_value=date_min, max_value=date_ma
 # Filter for the traffic light
 filtered_team_traffic_df = df_all[(df_all['Team Name'].isin(selected_teams)) &     
                                   (df_all['Date'] >= pd.to_datetime(selected_dates[0])) &
-                                  (df_all['Date'] <= pd.to_datetime(selected_dates[1]))]
+                                  (df_all['Date'] <= pd.to_datetime(selected_dates[1]))].dropna()
 
 filtered_team_traffic_df_week = df_week_player[(df_week_player['Team Name'].isin(selected_teams)) &     
                                   (df_week_player['Date'] >= pd.to_datetime(selected_dates[0])) &
-                                  (df_week_player['Date'] <= pd.to_datetime(selected_dates[1]))]
+                                  (df_week_player['Date'] <= pd.to_datetime(selected_dates[1]))].dropna()
 
 
 
@@ -61,7 +61,7 @@ filtered_df_all_player = df_all[
     (df_all['Player'] == selected_player) &
     (df_all['Date'] >= pd.to_datetime(selected_dates[0])) &
     (df_all['Date'] <= pd.to_datetime(selected_dates[1]))
-]
+].dropna()
 
 filtered_df_week_player = df_week_player[
     (df_week_player['Team Name'].isin(selected_teams)) &
@@ -69,14 +69,14 @@ filtered_df_week_player = df_week_player[
     (df_week_player['Player'] == selected_player) &
     (df_week_player['Date'] >= pd.to_datetime(selected_dates[0])) &
     (df_week_player['Date'] <= pd.to_datetime(selected_dates[1]))
-]
+].dropna()
 
 filtered_df_week_team = df_week_player[
     (df_week_player['Team Name'].isin(selected_teams)) &
     (df_week_player['Season'].isin(selected_seasons)) &
     (df_week_player['Date'] >= pd.to_datetime(selected_dates[0])) &
     (df_week_player['Date'] <= pd.to_datetime(selected_dates[1]))
-]
+].dropna()
 
 
 
@@ -153,7 +153,7 @@ for key, value in not_pass_metrics.items():
                     st.markdown(f"- **{key}** - performance are normal.")
                 else:
                     # Generate the bullet list with colored items
-                    bullet_list = "\n".join([f'<li><span style="color:#FF4B4B;"> - {str(x)} </span></li>' for x in not_pass_metrics[key]])
+                    bullet_list = "\n".join([f'<li><span style="color:#FF4B4B;">{str(x)} </span></li>' for x in not_pass_metrics[key]])
                     st.markdown(f"""**Warning** on:\n<ul>{bullet_list}</ul>""", unsafe_allow_html=True)
         
         with visual:
