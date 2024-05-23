@@ -15,7 +15,7 @@ metrics_classes = {
 
 
 
-def info_box(color_box=(255, 75, 75), iconname="fas fa-balance-scale-right", sline="Observations", i=123):
+def info_box(color_box=(255, 75, 75), iconname="fas fa-balance-scale-right", sline="Observations", i=123, alpha=1, percentage = 100):
     wch_colour_box = color_box
     wch_colour_font = (0, 0, 0)
     fontsize = 28
@@ -25,21 +25,37 @@ def info_box(color_box=(255, 75, 75), iconname="fas fa-balance-scale-right", sli
     lnk = '<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.12.1/css/all.css" crossorigin="anonymous">'
     i = i
 
-    htmlstr = f"""<p style='background-color: rgb({wch_colour_box[0]}, 
-                                                {wch_colour_box[1]}, 
-                                                {wch_colour_box[2]}, 1); 
-                            color: rgb({wch_colour_font[0]}, 
-                                    {wch_colour_font[1]}, 
-                                    {wch_colour_font[2]}, 1); 
-                            font-size: {fontsize}px; 
-                            border-radius: 7px; 
-                            padding-left: 12px; 
-                            padding-top: 18px; 
-                            padding-bottom: 18px; 
-                            line-height:25px;'>
-                            <i class='{iconname} fa-xs'></i> {i}
-                            </style><BR><span style='font-size: 18px; 
-                            margin-top: 0;'>{sline}</style></span></p>"""
+    htmlstr =  f"""
+    <div style='background-color: rgb({wch_colour_box[0]}, 
+                                      {wch_colour_box[1]}, 
+                                      {wch_colour_box[2]}, 0.2); 
+                color: rgb({wch_colour_font[0]}, 
+                          {wch_colour_font[1]}, 
+                          {wch_colour_font[2]}, 1); 
+                font-size: {fontsize}px; 
+                border-radius: 7px; 
+                padding-left: 12px; 
+                padding-top: 18px; 
+                padding-bottom: 18px; 
+                line-height:25px; 
+                position: relative;'>
+        <div style='width: {percentage}%; 
+                    background-color: rgb({wch_colour_box[0]}, 
+                                          {wch_colour_box[1]}, 
+                                          {wch_colour_box[2]}, 1); 
+                    height: 100%; 
+                    position: absolute; 
+                    top: 0; 
+                    left: 0; 
+                    border-radius: 7px;'></div>
+        <div style='position: relative; 
+                    z-index: 1; 
+                    padding-left: 12px;'>
+            <i class='{iconname} fa-xs'></i> {i}<br>
+            <span style='font-size: 18px; margin-top: 0;'>{sline}</span>
+        </div>
+    </div>
+    """
 
     return lnk + htmlstr
 
@@ -289,3 +305,4 @@ def create_sankey(df, date_range, column_name, node_positions=None, max_width=10
         font_size=10
     )
     return fig
+

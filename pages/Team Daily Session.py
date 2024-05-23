@@ -7,10 +7,6 @@ df_all = pd.read_csv("./data/df_all.csv", parse_dates=["Date"], date_format='%Y-
 st.set_page_config(layout="wide")
 comment_table = pd.read_csv("./data/team_daily_training_comment.csv")
 
-
-st.sidebar.markdown("# Team")
-
-
 teams = df_all['Team Name'].unique()
 default_team = 'Team1' if 'Team1' in teams else teams[0]
 selected_teams = st.sidebar.selectbox('Team', teams)
@@ -72,53 +68,72 @@ with attendance_num:
                         ),
             unsafe_allow_html=True)
 with avg_duration:
-    today = filtered_df["Duration"].mean().round(1)
-    max_of_avg_of_weekday= filtered_df_week.groupby("Weekday")["Duration"].mean().max()
-    percentage = f'{((today/max_of_avg_of_weekday)*100).round(0)}%'
+    if attendance:
+        today = filtered_df["Duration"].mean().round(1)
+        max_of_avg_of_weekday= filtered_df_week.groupby("Weekday")["Duration"].mean().max()
+        percentage = ((today/max_of_avg_of_weekday)*100).round(0)
+    else:
+        today = year_week
+        percentage = 100
     st.markdown(info_box(sline="Avg Duration",
                         iconname = "fa fa-clock",
                         color_box =(0, 231, 255),
-                        i=f"""{today} | {percentage} """ if attendance else year_week
+                        i=f"""{today}""",
+                        percentage=percentage
                         ),
             unsafe_allow_html=True)
+    
+
 with avg_distance:
-    today = filtered_df["Total Distance(m)"].mean().round(1)
-    max_of_avg_of_weekday= filtered_df_week.groupby("Weekday")["Total Distance(m)"].mean().max()
-    percentage = f'{((today/max_of_avg_of_weekday)*100).round(0)}%'
-    st.markdown(info_box(sline="Avg Distance(m)",
-                         iconname = "fa fa-arrows-alt",
-                         color_box=(0, 231, 255),
-                         i=f"""{today} | {percentage} """ if attendance else year_week
-                         ),
+    if attendance:
+        today = filtered_df["Total Distance(m)"].mean().round(1)
+        max_of_avg_of_weekday= filtered_df_week.groupby("Weekday")["Total Distance(m)"].mean().max()
+        percentage = ((today/max_of_avg_of_weekday)*100).round(0)
+    else:
+        today = year_week
+        percentage = 100
+    st.markdown(info_box(sline="Avg Distance",
+                        iconname = "fa fa-clock",
+                        color_box =(0, 231, 255),
+                        i=f"""{today}""",
+                        percentage=percentage
+                        ),
                 unsafe_allow_html=True)
 with avg_load:
-    today = filtered_df["Total Player Load"].mean().round(1)
-    max_of_avg_of_weekday= filtered_df_week.groupby("Weekday")["Total Player Load"].mean().max()
-    percentage = f'{((today/max_of_avg_of_weekday)*100).round(0)}%'
+    if attendance:
+        today = filtered_df["Total Player Load"].mean().round(1)
+        max_of_avg_of_weekday= filtered_df_week.groupby("Weekday")["Total Player Load"].mean().max()
+        percentage = ((today/max_of_avg_of_weekday)*100).round(0)
+    else:
+        today = year_week
+        percentage = 100
     st.markdown(info_box(sline="Avg Load",
-                         iconname = "fas fa-exclamation-circle",
-                         color_box=(0, 231, 255),
-                         i=f"""{today} | {percentage} """ if attendance else year_week
-                         ),
+                        iconname = "fa fa-clock",
+                        color_box =(0, 231, 255),
+                        i=f"""{today}""",
+                        percentage=percentage
+                        ),
                 unsafe_allow_html=True)
 with avg_intensity:
     today = filtered_df["High Intensity Distance(m)"].mean().round(1)
     max_of_avg_of_weekday= filtered_df_week.groupby("Weekday")["High Intensity Distance(m)"].mean().max()
-    percentage = f'{((today/max_of_avg_of_weekday)*100).round(1)}%'
-    st.markdown(info_box(sline="Avg HSR(m)",
-                         iconname = "fas fa-exclamation-circle",
-                         color_box=(0, 231, 255),
-                         i=f"""{today} | {percentage} """ if attendance else year_week
-                         ),
+    percentage = ((today/max_of_avg_of_weekday)*100).round(1)
+    st.markdown(info_box(sline="Avg High Intensity(m)",
+                        iconname = "fa fa-clock",
+                        color_box =(0, 231, 255),
+                        i=f"""{today}""" if attendance else year_week,
+                        percentage=percentage
+                        ),
                 unsafe_allow_html=True)
 with avg_sprint:
     today = filtered_df["Sprint Distance(m)"].mean().round(1)
     max_of_avg_of_weekday= filtered_df_week.groupby("Weekday")["Sprint Distance(m)"].mean().max()
-    percentage = f'{((today/max_of_avg_of_weekday)*100).round(0)}%'
+    percentage = ((today/max_of_avg_of_weekday)*100).round(0)
     st.markdown(info_box(sline="Avg Sprint",
                          iconname = "fas fa-exclamation-circle",
                          color_box=(0, 231, 255),
-                         i=f"""{today} | {percentage} """ if attendance else year_week
+                         i=f"""{today}""" if attendance else year_week,
+                        percentage=percentage
                          ),
                 unsafe_allow_html=True)
                 
