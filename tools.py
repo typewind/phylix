@@ -107,6 +107,14 @@ def submit_comment(player_id,  text, user, comment_table):
     comment_table = pd.concat([comment_table, new_row], ignore_index=True)
     comment_table.to_csv("./data/player_weekly_review_comment.csv", encoding='utf-8', index=False)
 
+def submit_team_comment(team, date, text, user, comment_table, path):
+    ts = time.time()
+    now = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+    new_row = pd.DataFrame({'Team': [team], 'Date': [date], 
+                            'Timestamp': [now],'User':user, 'Comment': [text]})
+    comment_table = pd.concat([comment_table, new_row], ignore_index=True)
+    comment_table.to_csv(path, encoding='utf-8', index=False)
+
 
 
 def draw_acc_dec():
@@ -177,7 +185,7 @@ def draw_ima_cod(player1):
 
 def team_individual_graph(filtered_df,filtered_df_week, metric):
 
-    temp_df = filtered_df[["Player",f"{metric}"]].dropna()
+    temp_df = filtered_df[["Player", "Position", f"{metric}"]].dropna()
 
     max_series = filtered_df_week.groupby(["Player"])[f"{metric}"].max()
     max_series.name = f"Max {metric}"
@@ -185,17 +193,16 @@ def team_individual_graph(filtered_df,filtered_df_week, metric):
     max_series.rename(columns={'index': 'Player'}, inplace=True)
 
     merged_df = temp_df.merge(max_series, on='Player', how='left')
-    print(merged_df)
-
     merged_df = merged_df.sort_values(by=metric, ascending=False)
 
     # Calculate the average Duration
     average_duration = merged_df[metric].mean()
-
+    
     # Create the bar chart for Duration
-    bars = alt.Chart(merged_df).mark_bar(color="#0F52BA").encode(
+    bars = alt.Chart(merged_df).mark_bar().encode(
         y=alt.Y('Player:N', sort=merged_df['Player'].tolist(), title='Player'),
         x=alt.X(f'{metric}:Q', title=metric),
+        color=alt.Color('Position:N', scale=alt.Scale(scheme='category10'), legend=alt.Legend(title="Position")),
         tooltip=['Player', metric, f'{metric}']
     ).properties(
     height=800

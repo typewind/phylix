@@ -131,9 +131,13 @@ with st.container():
         st.markdown(f"## {selected_player} Report")
         not_pass_metrics = get_not_passed_metrics(filtered_df_week_player, metrics_classes)
         # Description
-        st.markdown(f"""During {selected_dates[0]} and {selected_dates[1]},
-                   {selected_player}, the {filtered_df_week_player["Position"].values[-1]} of 
-                    {", ".join(str(x) for x in filtered_df_week_player["Team Name"].unique())}:""")
+        if len(filtered_df_week_player):
+            st.markdown(f"""During {selected_dates[0]} and {selected_dates[1]},
+                    {selected_player}, the {filtered_df_week_player["Position"].values[-1]} of 
+                        {", ".join(str(x) for x in filtered_df_week_player["Team Name"].unique())}:""")
+        else: 
+            st.markdown(f"""During {selected_dates[0]} and {selected_dates[1]},
+                    {selected_player} doesn't have training session.""")
         # check if any metrics abnormal
     with info:
         pass

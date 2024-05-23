@@ -36,7 +36,7 @@ def load_data(file_path):
     
     return agg_df
 
-agg_df = load_data('./data/data_cleaned.csv')
+agg_df = load_data('./data/df_all.csv')
 
 st.markdown("# Physical Performance Monitor")
 st.sidebar.markdown("# Overview")
@@ -49,21 +49,20 @@ teams = agg_df['Team Name'].unique()
 default_team = teams
 selected_teams = st.sidebar.multiselect('Team', teams, default_team)
 
-# Year filter
-years = agg_df['Year'].unique()
-selected_years = st.sidebar.multiselect('Year', years, years)
+# Date filter
+date_min = agg_df['Date'].min().date()
+date_max = agg_df['Date'].max().date()
+selected_dates = st.sidebar.slider('Date', min_value=date_min, max_value=date_max, value=(date_min, date_max))
+
 
 # Filter the data based on selections
 filtered_df = agg_df[
     (agg_df['Team Name'].isin(selected_teams)) &
-    (agg_df['Year'].isin(selected_years)) 
-]
+    (agg_df['Date'] >= pd.to_datetime(selected_dates[0])) &
+    (agg_df['Date'] <= pd.to_datetime(selected_dates[1]))].dropna()
 
-# Normalize attendance for alpha channel
-min_attendance = filtered_df['Attendance'].min()
-max_attendance = filtered_df['Attendance'].max()
-filtered_df['Attendance_alpha'] = filtered_df['Attendance'].apply(lambda x: 0.01 + 0.95 * (x - min_attendance) / (max_attendance - min_attendance))
 
+overall_cols = ["Attendance", "Duration"]
 
 # Create the Gantt chart per duration
 st.write('## Weekly Session Duration Per Team (2021/07/01 - 2023/06/30)')
