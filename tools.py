@@ -229,7 +229,7 @@ def team_individual_graph(filtered_df,filtered_df_week, metric):
 
     return combined_chart
 
-def create_sankey(df, date_range, column_name, node_positions=None):
+def create_sankey(df, date_range, column_name, node_positions=None, max_width=1000):
     # Filter DataFrame for the given date range
     start_date, end_date = pd.to_datetime(date_range[0]), pd.to_datetime(date_range[1])
     df_filtered = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
@@ -239,7 +239,7 @@ def create_sankey(df, date_range, column_name, node_positions=None):
     
     # Initialize the Sankey diagram components
     node_labels = nodes
-    links = {'source': [], 'target': [], 'value': []}
+    links = {'source': [], 'target': [], 'value': [], 'player': [], 'date': []}
     
     # Create the links for the Sankey diagram
     previous_value = {}
@@ -255,6 +255,8 @@ def create_sankey(df, date_range, column_name, node_positions=None):
                     links['source'].append(source_idx)
                     links['target'].append(target_idx)
                     links['value'].append(1)
+                    links['player'].append(player)
+                    links['date'].append(date.strftime('%Y-%m-%d'))
 
         previous_value = current_value
 
@@ -275,9 +277,15 @@ def create_sankey(df, date_range, column_name, node_positions=None):
         link=dict(
             source=links['source'],
             target=links['target'],
-            value=links['value']
+            value=links['value'],
+            customdata=list(zip(links['player'], links['date'])),
+            hovertemplate='Player: %{customdata[0]}<br>Date: %{customdata[1]}<extra></extra>'
         )
     ))
 
-    fig.update_layout()
+    fig.update_layout(
+        width=max_width,  # Set the maximum width
+        title_text=f"Player Movements Between {column_name}s ({start_date.date()} to {end_date.date()})",
+        font_size=10
+    )
     return fig
