@@ -2,6 +2,7 @@ import altair as alt
 import pandas as pd
 import datetime
 import time
+import plotly.graph_objects as go
 
 
 metrics_classes = {
@@ -227,3 +228,56 @@ def team_individual_graph(filtered_df,filtered_df_week, metric):
     )
 
     return combined_chart
+
+def create_sankey(df, date_range, column_name, node_positions=None):
+    # Filter DataFrame for the given date range
+    start_date, end_date = pd.to_datetime(date_range[0]), pd.to_datetime(date_range[1])
+    df_filtered = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
+    
+    # Create a list of unique values in the specified column
+    nodes = df_filtered[column_name].unique().tolist()
+    
+    # Initialize the Sankey diagram components
+    node_labels = nodes
+    links = {'source': [], 'target': [], 'value': []}
+    
+    # Create the links for the Sankey diagram
+    previous_value = {}
+
+    for date, group in df_filtered.groupby('Date'):
+        current_value = group.set_index('Player')[column_name].to_dict()
+
+        if previous_value:
+            for player, value in current_value.items():
+                if player in previous_value and previous_value[player] != value:
+                    source_idx = nodes.index(previous_value[player])
+                    target_idx = nodes.index(value)
+                    links['source'].append(source_idx)
+                    links['target'].append(target_idx)
+                    links['value'].append(1)
+
+        previous_value = current_value
+
+    # Extract positions for each node, setting default None for unspecified positions
+    node_x = [node_positions[value][0] if node_positions and value in node_positions else None for value in node_labels]
+    node_y = [node_positions[value][1] if node_positions and value in node_positions else None for value in node_labels]
+
+    # Create the Sankey diagram with specified node positions
+    fig = go.Figure(go.Sankey(
+        node=dict(
+            pad=20,
+            thickness=10,
+            line=dict(color="black", width=0.5),
+            label=node_labels,
+            x=node_x,
+            y=node_y
+        ),
+        link=dict(
+            source=links['source'],
+            target=links['target'],
+            value=links['value']
+        )
+    ))
+
+    fig.update_layout()
+    return fig

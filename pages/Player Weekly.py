@@ -32,12 +32,6 @@ players = filtered_team_df['Player'].unique()
 default_player = players[0] if len(players) > 0 else ''
 selected_player = st.sidebar.selectbox('Player', players, index=0 if default_player else -1)
 
-# Season filter
-seasons = df_all['Season'].unique()
-default_seasons = ['2021/22', '2022/23'] if '2021/22' in seasons and '2022/23' in seasons else seasons
-selected_seasons = st.sidebar.multiselect('Season', seasons, default_seasons)
-
-
 # Date filter
 date_min = df_all['Date'].min().date()
 date_max = df_all['Date'].max().date()
@@ -57,7 +51,6 @@ filtered_team_traffic_df_week = df_week_player[(df_week_player['Team Name'].isin
 # Filter the data based on selections
 filtered_df_all_player = df_all[
     (df_all['Team Name'].isin(selected_teams)) &
-    (df_all['Season'].isin(selected_seasons)) &
     (df_all['Player'] == selected_player) &
     (df_all['Date'] >= pd.to_datetime(selected_dates[0])) &
     (df_all['Date'] <= pd.to_datetime(selected_dates[1]))
@@ -65,7 +58,6 @@ filtered_df_all_player = df_all[
 
 filtered_df_week_player = df_week_player[
     (df_week_player['Team Name'].isin(selected_teams)) &
-    (df_week_player['Season'].isin(selected_seasons)) &
     (df_week_player['Player'] == selected_player) &
     (df_week_player['Date'] >= pd.to_datetime(selected_dates[0])) &
     (df_week_player['Date'] <= pd.to_datetime(selected_dates[1]))
@@ -73,7 +65,6 @@ filtered_df_week_player = df_week_player[
 
 filtered_df_week_team = df_week_player[
     (df_week_player['Team Name'].isin(selected_teams)) &
-    (df_week_player['Season'].isin(selected_seasons)) &
     (df_week_player['Date'] >= pd.to_datetime(selected_dates[0])) &
     (df_week_player['Date'] <= pd.to_datetime(selected_dates[1]))
 ].dropna()

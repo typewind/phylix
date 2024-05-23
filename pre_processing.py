@@ -36,6 +36,9 @@ df_all.columns = ['Date', 'Player', 'Position', 'Team Name', 'Duration',
 df_all = df_all[df_all["Duration"]>=15]
 training_count = df_all["Player"].value_counts()
 
+# %% transfer km/h to m/s
+df_all['Maximum Velocity(m/s)'] = df_all['Maximum Velocity(m/s)']/3.6
+
 # %% Tool functions
 
 # Calculate ACWR
