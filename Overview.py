@@ -2,10 +2,12 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 import datetime
+import time
 from tools import create_sankey
 
 # Set the page configuration to wide layout
 st.set_page_config(layout="wide")
+comment_table = pd.read_csv("./data/club_overview_comment.csv")
 
 # Caching the data loading function to improve performance
 @st.cache_data
@@ -45,7 +47,7 @@ def load_data(file_path):
 agg_df = load_data('./data/df_all.csv')
 df_all = pd.read_csv('./data/df_all.csv', parse_dates=["Date"], date_format='%Y-%m-%d')
 
-st.markdown("# Physical Performance Monitor")
+
 st.sidebar.markdown("# Overview")
 
 
@@ -74,7 +76,7 @@ filtered_all = df_all[(df_all['Team Name'].isin(selected_teams)) &
     (df_all['Date'] >= pd.to_datetime(selected_dates[0])) &
     (df_all['Date'] <= pd.to_datetime(selected_dates[1]))].dropna()
 
-
+st.markdown(f"# Club Performance Overview ({selected_dates[0]} to {selected_dates[1]})")
 overall_cols = ["Attendance", "Total Distance(m)", "Total Player Load","Duration", 
                 "High Intensity Distance(m)", "Sprint Distance(m)"]
 rank_cols = ["Maximum Velocity(m/s)",  "High Intensity Distance(m)", "Sprint Distance(m)", 
@@ -93,7 +95,6 @@ with rank:
     rank_df = rank_df.merge(last_30_days_array, on='Player', how='left')
 
     st.write(f'## {selected_metric} Leaderboard')
-    print(rank_df[["Player", "Team Name", "Date"]].head())
     st.dataframe(rank_df.sort_values(selected_metric, ascending=False).head(10), 
                  hide_index=True,
                  use_container_width = True,
@@ -101,6 +102,28 @@ with rank:
                                   "Last 30 Days": st.column_config.LineChartColumn(f"Last 30 Days of {selected_dates[1]}", y_min=0, y_max=11),
                      }
                  )
+    # Group by Position and calculate the average of selected metrics
+    st.write(f'## Avg {selected_metric} by Position')
+    avg_metric_by_position = filtered_all.groupby('Position')[selected_metric].mean().reset_index().round(2)
+
+    bars = alt.Chart(avg_metric_by_position).mark_bar().encode(
+        x=alt.X('Position:N', title='Position', sort='-y'),
+        y=alt.Y(f'{selected_metric}:Q', title=f'Avg {selected_metric}'),
+        tooltip=['Position:N', f'{selected_metric}:Q']
+    )
+    # Add text labels to the bars
+    text = bars.mark_text(
+        align='center',
+        baseline='middle',
+        dy=-10,  # Adjust vertical alignment of the text
+    ).encode(
+        text=alt.Text(f'{selected_metric}:Q', format='.2f')
+    )
+    bar_chart = (bars + text).properties(
+    title=f'Average {selected_metric} by Position'
+    )
+    st.altair_chart(bar_chart, use_container_width=True)
+
 
 with overview:
     selected_metric = st.selectbox('Session Metric', overall_cols)
@@ -114,17 +137,7 @@ with overview:
         width=800,
         height=400
     )
-    st.altair_chart(gantt_chart, use_container_width=True)
-    st.markdown("""
-    How We Aggregate Player Metrics:
-    - Attendance: The average player has attended the session.
-    - Duration: The average time players spend.
-    - Total Distance (m): The average distance players cover.
-    - Total Player Load: The average workload on players.
-    - High Intensity Distance (m): The peak distance at high intensity.
-    - Sprint Distance (m): The longest sprint distance.
-""")
-    
+    st.altair_chart(gantt_chart, use_container_width=True)    
     # Create Sankey diagrams for each date range using 'Team Name'
     # Specify node positions for specific teams (Team2 and Team4 in this example)
     node_positions = {
@@ -140,3 +153,46 @@ with overview:
     fig = create_sankey(filtered_all, selected_dates, 'Team Name', node_positions)
     st.markdown(f"## Player Movements Between Teams ({ selected_dates[0]} to {selected_dates[1]})")
     st.plotly_chart(fig, use_container_width=True, theme="streamlit")
+
+
+
+with st.container():
+    st.markdown("**Comment:**")
+    comment_list = (comment_table["User"] + ": " + comment_table["Comment"]).values
+    if len(comment_list)==0:
+        st.markdown("Ask performance team for further advice.")
+    else:
+        for x in comment_list:
+            st.markdown(f"- {x}")
+
+    st.markdown('''
+                <style>
+                [data-testid="stMarkdownContainer"] ul{
+                    padding-left:40px;
+                }
+                </style>
+                ''', unsafe_allow_html=True)
+
+    # add comment
+    user = st.text_input('Your Name', '')
+    comment = st.text_area('Comment:', '')
+    if st.button('Submit'):
+
+        ts = time.time()
+        now = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+        new_row = pd.DataFrame({'Timestamp': [now],'User':user, 'Comment': [comment]})
+        comment_table = pd.concat([comment_table, new_row], ignore_index=True)
+        comment_table.to_csv("./data/club_overview_comment.csv", encoding='utf-8', index=False)
+        # reset comments
+        comment = ""
+        user = ""
+        st.rerun()
+st.markdown("""
+    How We Aggregate Player Metrics:
+    - Attendance: The average player has attended the session.
+    - Duration: The average time players spend.
+    - Total Distance (m): The average distance players cover.
+    - Total Player Load: The average workload on players.
+    - High Intensity Distance (m): The peak distance at high intensity.
+    - Sprint Distance (m): The longest sprint distance.
+""")
