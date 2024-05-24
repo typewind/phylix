@@ -17,6 +17,7 @@ st.set_page_config(layout="wide")
 st.markdown("# Player Weekly Performance Monitor")
 st.sidebar.markdown("# Player")
 
+
 # ========================
 # Filter
 # ========================
@@ -47,6 +48,10 @@ filtered_team_traffic_df_week = df_week_player[(df_week_player['Team Name'].isin
                                   (df_week_player['Date'] <= pd.to_datetime(selected_dates[1]))].dropna()
 
 
+# Risk Score filter
+selected_risk = st.sidebar.slider('Risk Score', min_value=0, max_value=15, value=(8, 15))
+
+
 
 # Filter the data based on selections
 filtered_df_all_player = df_all[
@@ -74,7 +79,7 @@ filtered_df_week_team = df_week_player[
 # ========================
 # Info Box
 # ========================
-total_players, intensity_risk, agi_risk, ima_risk, vol_risk, imba= st.columns(6)
+total_players, intensity_risk, ima_risk, vol_risk= st.columns(4)
 with total_players:
     st.markdown(info_box(sline="Players Selected",
                         iconname = "fas fa-users",
@@ -94,23 +99,11 @@ with intensity_risk:
                          color_box=(0, 231, 255),
                          i=len(filtered_team_traffic_df_week[filtered_team_traffic_df_week["Intensity Risk Score"]!=0]["Player"].dropna().unique())),
                 unsafe_allow_html=True)
-with agi_risk:
-    st.markdown(info_box(sline="Agility Risk",
-                         iconname = "fas fa-exclamation-circle",
-                         color_box=(0, 231, 255),
-                         i=len(filtered_team_traffic_df_week[filtered_team_traffic_df_week["Agility Risk Score"]!=0]["Player"].dropna().unique())),
-                unsafe_allow_html=True)
 with ima_risk:
     st.markdown(info_box(sline="IMA Risk",
                          iconname = "fas fa-exclamation-circle",
                          color_box=(0, 231, 255),
                          i=len(filtered_team_traffic_df_week[filtered_team_traffic_df_week["IMA Risk Score"]!=0]["Player"].dropna().unique())),
-                unsafe_allow_html=True)
-with imba:
-    st.markdown(info_box(sline="Imbalance",
-                         iconname = "fas fa-balance-scale-right",
-                         color_box=(0, 255, 246),
-                         i=len(filtered_team_traffic_df_week[filtered_team_traffic_df_week["Is IMA Imbalance"]]["Player"].dropna().unique())),
                 unsafe_allow_html=True)
                 
 st.markdown("---")

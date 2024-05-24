@@ -15,6 +15,7 @@ comment_table = pd.read_csv("./data/player_daily_review_comment.csv")
 st.set_page_config(layout="wide")
 
 
+
 # ========================
 # Filter
 # ========================
@@ -69,6 +70,7 @@ bar_chart = alt.Chart(mean_by_weekday).mark_bar().encode(
 ).properties(
     title=f"{year_week} Training Periodization"
 )
+
 
 # Display the bar chart in the sidebar below the date selector
 st.sidebar.altair_chart(bar_chart, use_container_width=True)

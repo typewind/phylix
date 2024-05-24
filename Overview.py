@@ -9,6 +9,7 @@ from tools import create_sankey
 st.set_page_config(layout="wide")
 comment_table = pd.read_csv("./data/club_overview_comment.csv")
 
+
 # Caching the data loading function to improve performance
 @st.cache_data
 def load_data(file_path):
@@ -25,8 +26,11 @@ def load_data(file_path):
         "Total Player Load": 'mean',
         "High Intensity Distance(m)": 'max',
         "Sprint Distance(m)": 'max',
-        'Player': 'nunique'
-    }).rename(columns={'Player': 'Attendance'}).reset_index()
+        'Player': 'nunique',
+        "Load Per Minute": 'mean',
+        "Distance Per Minute": 'mean', 
+        "Acc-Dec-COD Per Minute": 'mean'
+    }).rename(columns={'Player': 'Attendance'}).reset_index().round(2)
     
     # Calculate average attendance for each team during the entire lifecycle
     avg_attendance = agg_df.groupby('Team Name')['Attendance'].mean().reset_index()
@@ -78,7 +82,8 @@ filtered_all = df_all[(df_all['Team Name'].isin(selected_teams)) &
 
 st.markdown(f"# Club Performance Overview ({selected_dates[0]} to {selected_dates[1]})")
 overall_cols = ["Attendance", "Total Distance(m)", "Total Player Load","Duration", 
-                "High Intensity Distance(m)", "Sprint Distance(m)"]
+                "High Intensity Distance(m)", "Sprint Distance(m)", "Load Per Minute", 
+             "Distance Per Minute", "Acc-Dec-COD Per Minute"]
 rank_cols = ["Maximum Velocity(m/s)",  "High Intensity Distance(m)", "Sprint Distance(m)", 
              "Total Distance(m)", "Total Player Load", "Load Per Minute", 
              "Distance Per Minute", "Acc-Dec-COD Per Minute"]

@@ -83,6 +83,7 @@ def get_risk_score(df, metrics, risk_score_name):
         df[f'{metric}_abnormal_num'] = df[f'is_{metric}_abnormal'].map(classification_to_num)
     df[risk_score_name] = df[[f'{metric}_abnormal_num' for metric in metrics]].sum(axis=1)
     df.drop(columns=[f'{metric}_abnormal_num' for metric in metrics], inplace=True)
+
     return df
 
 
@@ -95,7 +96,7 @@ def get_training_intensity(df):
     return df
 
 def get_imbalance(df):
-    df["IMA COD Imbalance"] = ((df['IMA COD(left)'] - df['IMA COD(right)'])/df['IMA COD(right)']).round(2)
+    df["IMA COD Imbalance"] = ((df['IMA COD(left)'] - df['IMA COD(right)'])/df['IMA COD(left)']).round(2)
     df["Is IMA Imbalance"] = df["IMA COD Imbalance"].abs() > IMBA_THRES
 
     conditions = [
@@ -185,6 +186,8 @@ for metric in metrics + intensity_metrics:
 for metric_class, metrics in metrics_classes.items():
     df_all = get_risk_score(df_all, metrics, f"{metric_class} Risk Score")
     df_week_player = get_risk_score(df_week_player, metrics, f"{metric_class} Risk Score")
+
+
 
 # %%
 df_week_player = df_week_player.reset_index()

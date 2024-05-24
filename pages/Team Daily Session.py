@@ -54,6 +54,8 @@ bar_chart = alt.Chart(mean_by_weekday).mark_bar().encode(
 )
 
 # Display the bar chart in the sidebar below the date selector
+
+
 st.sidebar.altair_chart(bar_chart, use_container_width=True)
 
 st.markdown(f"# {selected_date}({year_week}) {selected_teams} Training Overview")
