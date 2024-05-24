@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
+import datetime
 from tools import info_box, draw_acwr, metrics_classes, get_not_passed_metrics, submit_comment, draw_ima_cod
 
 df_all = pd.read_csv("./data/df_all.csv", parse_dates=["Date"], date_format='%Y-%m-%d')
@@ -85,6 +86,12 @@ filtered_df_player_all = df_all[
     (df_all['Player'] == selected_player) 
 ]
 
+last_30_days_start = filtered_df_player['Date'].max() - datetime.timedelta(days=30)
+last_30_days_df = df_all[(df_all['Date'] >= last_30_days_start) &
+                         (df_all['Date'] <= pd.to_datetime(selected_date)) &
+                        (df_all['Team Name']== selected_teams) &
+                        (df_all['Player'] == selected_player)].dropna()
+
 # team df: filtered_df
 
 st.markdown(f"# {selected_player}: {selected_date} Report")
@@ -157,7 +164,6 @@ with duration:
         value = filtered_df_player["Duration"].round(1).values[0]
         week_max = filtered_df_week["Duration"].round(1).max()
         pctg = (value/week_max) * 100
-        print(value, week_max, pctg)
     else:
         value = "No Session"
         pctg = 100
@@ -170,4 +176,44 @@ with duration:
                 unsafe_allow_html=True)
                 
 st.markdown("---")
+
+# =======================
+# ACWR in the last 30 days
+# =======================
+
+not_pass_metrics = get_not_passed_metrics(last_30_days_df, metrics_classes)
+# Description
+with st.container():
+    if len(last_30_days_df):
+        st.markdown(f"""During last 30 days of {selected_date},
+                {selected_player}, the {last_30_days_df["Position"].values[-1]} of 
+                    {", ".join(str(x) for x in last_30_days_df["Team Name"].unique())}, has {len(last_30_days_df.dropna())} sessions in total.""")
+    else: 
+        st.markdown(f"""During last 30 days of and {selected_date},
+                {selected_player} doesn't have training session.""")
+        
+for key, value in not_pass_metrics.items():
+    with st.container():
+        summary, visual = st.columns(2)
+        with summary:
+            st.markdown(f"### {key}")
+            if key == "IMA":
+                if any(last_30_days_df["Is IMA Imbalance"]):
+                    st.markdown(f"""- The balance of <span style="color:#FF4B4B;"> IMA COD </span> shows risks. """, unsafe_allow_html=True)
+                else:
+                    st.markdown("- The IMA CODs are balanced.")
+            else:
+                if len(value)==0 :
+                    st.markdown(f"- **{key}** - performance are normal.")
+                else:
+                    # Generate the bullet list with colored items
+                    bullet_list = "\n".join([f'<li><span style="color:#FF4B4B;">{str(x)} </span></li>' for x in not_pass_metrics[key]])
+                    st.markdown(f"""**Warning** on:\n<ul>{bullet_list}</ul>""", unsafe_allow_html=True)
+        
+        with visual:
+            if key == "IMA":
+                st.altair_chart(draw_ima_cod(last_30_days_df),use_container_width=True, theme="streamlit")
+            else:
+                selected_metric_volumn = st.selectbox(f"Select {key} Metric", metrics_classes[key])
+                st.altair_chart(draw_acwr(last_30_days_df, selected_metric_volumn),use_container_width=True, theme="streamlit")
 

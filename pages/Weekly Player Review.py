@@ -83,10 +83,10 @@ with total_players:
                         ),
             unsafe_allow_html=True)
 with vol_risk:
-    st.markdown(info_box(sline="Volumn Risk",
+    st.markdown(info_box(sline="Volume Risk",
                          iconname = "fas fa-exclamation-circle",
                          color_box=(0, 231, 255),
-                         i=len(filtered_team_traffic_df_week[filtered_team_traffic_df_week["Volumn Risk Score"]!=0]["Player"].dropna().unique())),
+                         i=len(filtered_team_traffic_df_week[filtered_team_traffic_df_week["Volume Risk Score"]!=0]["Player"].dropna().unique())),
                 unsafe_allow_html=True)
 with intensity_risk:
     st.markdown(info_box(sline="Intensity Risk",

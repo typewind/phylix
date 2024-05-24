@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 
 
 metrics_classes = {
-    "Volumn": ['Total Distance(m)', 'Total Player Load', 'Duration'],
+    "Volume": ['Total Distance(m)', 'Total Player Load', 'Duration'],
     "Intensity": ['Load Per Minute', 'Distance Per Minute', 'Acc-Dec-COD Per Minute'],
     "Agility": ['Acc 2m/s2 Total Effort','Acc 3m/s2 Total Effort', 'Dec 2m/s2 Total Effort', 'Dec 3m/s2 Total Effort'],
     "IMA": ['IMA COD(left)', 'IMA COD(right)'],

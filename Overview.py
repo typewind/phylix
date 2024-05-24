@@ -90,7 +90,9 @@ with rank:
     selected_metric = st.selectbox('Session Metric', rank_cols)
     rank_df = filtered_all[["Player", "Team Name", "Position", "Date", selected_metric]].sort_values("Date").round(2).dropna()
     last_30_days_start = rank_df['Date'].max() - datetime.timedelta(days=30)
-    last_30_days_df = rank_df[rank_df['Date'] >= last_30_days_start]
+    last_30_days_df = rank_df[(rank_df['Date'] >= last_30_days_start) &
+                              (rank_df['Date'] >= pd.to_datetime(selected_dates[0])) 
+                              ]
     last_30_days_array = last_30_days_df.groupby('Player').apply(lambda x: list(x[selected_metric])).reset_index(name='Last 30 Days')
     rank_df = rank_df.merge(last_30_days_array, on='Player', how='left')
 
@@ -124,6 +126,27 @@ with rank:
     )
     st.altair_chart(bar_chart, use_container_width=True)
 
+    # Group by team and calculate the average of selected metrics
+    st.write(f'## Avg {selected_metric} by Team')
+    avg_metric_by_position = filtered_all.groupby('Team Name')[selected_metric].mean().reset_index().round(2)
+
+    bars = alt.Chart(avg_metric_by_position).mark_bar().encode(
+        x=alt.X('Team Name:N', title='Team', sort='-y'),
+        y=alt.Y(f'{selected_metric}:Q', title=f'Avg {selected_metric}'),
+        tooltip=['Team Name:N', f'{selected_metric}:Q']
+    )
+    # Add text labels to the bars
+    text = bars.mark_text(
+        align='center',
+        baseline='middle',
+        dy=-10,  # Adjust vertical alignment of the text
+    ).encode(
+        text=alt.Text(f'{selected_metric}:Q', format='.2f')
+    )
+    bar_chart = (bars + text).properties(
+    title=f'Average {selected_metric} by Team'
+    )
+    st.altair_chart(bar_chart, use_container_width=True)
 
 with overview:
     selected_metric = st.selectbox('Session Metric', overall_cols)

@@ -143,8 +143,8 @@ with st.container():
     volumn, intensity = st.columns(2)
     agility, ima = st.columns(2)
     with volumn:
-        st.markdown(f"### Volumn")
-        selected_volumn = st.selectbox(f"Select Volumn Metric", metrics_classes["Volumn"], key="Volumn")
+        st.markdown(f"### Volume")
+        selected_volumn = st.selectbox(f"Select Volume Metric", metrics_classes["Volume"], key="Volume")
         st.altair_chart(team_individual_graph(filtered_df, filtered_df_week, selected_volumn), use_container_width=True, theme="streamlit")
     with intensity:
         st.markdown(f"### Intesity")
